@@ -4,14 +4,14 @@ services:
     ports:
       - 5432:5432
     environment: 
-      POSTGRES_USER: serviceops
-      POSTGRES_PASSWORD: serviceops
-      POSTGRES_DB: serviceops_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U serviceops -d serviceops_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
