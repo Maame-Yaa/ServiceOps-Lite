@@ -1,0 +1,99 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                  String              @id @default(uuid())
+  name                String
+  email               String              @unique
+  password            String
+  role                Role                @default(ADMIN)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  deletedAt           DateTime?
+  reviewedSubmissions IntakeSubmission[]   @relation("IntakeReviewer")
+  reviewedInquiries   Inquiry[]           @relation("InquiryReviewer")
+}
+
+model IntakeSubmission {
+  id            String                @id @default(uuid())
+  organization  String
+  email         String
+  phone         String?
+  serviceNeeded String                @db.Text
+  notes         String?               @db.Text
+  status        IntakeStatus          @default(NEW)
+  reviewedBy    User?                 @relation("IntakeReviewer", fields: [reviewedById], references: [id])
+  reviewedById  String?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  deletedAt     DateTime?
+  tags          IntakeSubmissionTag[]  @relation("SubmissionTags")
+}
+
+model Inquiry {
+  id            String         @id @default(uuid())
+  organization  String?
+  name          String
+  email         String
+  phone         String?
+  message       String         @db.Text
+  notes         String?        @db.Text
+  status        InquiryStatus  @default(NEW)
+  reviewedBy    User?          @relation("InquiryReviewer", fields: [reviewedById], references: [id])
+  reviewedById  String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+  tags          InquiryTag[]   @relation("InquiryTags")
+}
+
+model Tag {
+  id                   String               @id @default(uuid())
+  name                 String               @unique
+  createdAt            DateTime             @default(now())
+  intakeSubmissionTags IntakeSubmissionTag[] @relation("SubmissionTag")
+  inquiryTags          InquiryTag[]         @relation("InquiryTag")
+}
+
+model IntakeSubmissionTag {
+  submission   IntakeSubmission @relation("SubmissionTags", fields: [submissionId], references: [id])
+  tag          Tag              @relation("SubmissionTag", fields: [tagId], references: [id])
+  submissionId String
+  tagId        String
+  @@id([submissionId, tagId])
+}
+
+model InquiryTag {
+  inquiry   Inquiry @relation("InquiryTags", fields: [inquiryId], references: [id])
+  tag       Tag     @relation("InquiryTag", fields: [tagId], references: [id])
+  inquiryId String
+  tagId     String
+  @@id([inquiryId, tagId])
+}
+
+enum Role {
+  ADMIN
+}
+
+enum IntakeStatus {
+  NEW
+  REVIEWED
+  NEEDS_FOLLOW_UP
+}
+
+enum InquiryStatus {
+  NEW
+  IN_PROGRESS
+  CLOSED
+}
